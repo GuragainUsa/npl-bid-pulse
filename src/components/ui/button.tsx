@@ -10,14 +10,21 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // NPL Auction specific variants
+        auction: "bg-gradient-primary text-white font-bold shadow-auction hover:shadow-glow transition-all duration-300 border-0",
+        team: "bg-card text-card-foreground border border-border hover:bg-muted/50 hover:border-primary/50 transition-all duration-200",
+        "team-active": "bg-primary text-primary-foreground shadow-glow animate-pulse-glow",
+        bid: "bg-warning text-warning-foreground hover:bg-warning/90 animate-bid-bounce font-bold",
+        sold: "bg-success text-success-foreground hover:bg-success/90",
+        "category-a": "bg-category-a text-white hover:bg-category-a/90",
+        "category-b": "bg-category-b text-white hover:bg-category-b/90", 
+        "category-c": "bg-category-c text-white hover:bg-category-c/90",
+        gold: "bg-gradient-gold text-foreground font-bold shadow-lg hover:shadow-xl transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",

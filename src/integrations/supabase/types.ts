@@ -14,7 +14,152 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      auction_state: {
+        Row: {
+          auction_active: boolean | null
+          created_at: string | null
+          current_bid: number | null
+          current_player_id: number | null
+          highest_bidder: string | null
+          id: number
+          lucky_draw_active: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          auction_active?: boolean | null
+          created_at?: string | null
+          current_bid?: number | null
+          current_player_id?: number | null
+          highest_bidder?: string | null
+          id?: number
+          lucky_draw_active?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          auction_active?: boolean | null
+          created_at?: string | null
+          current_bid?: number | null
+          current_player_id?: number | null
+          highest_bidder?: string | null
+          id?: number
+          lucky_draw_active?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_state_current_player_id_fkey"
+            columns: ["current_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          base_price: number
+          batting_role: string | null
+          bowling_role: string | null
+          category: string
+          created_at: string | null
+          first_name: string
+          id: number
+          image_url: string | null
+          interested_teams: string[] | null
+          last_name: string
+          middle_name: string | null
+          player_type: string
+          province: string
+          sn: number
+          sold_price: number | null
+          status: string | null
+          team_name: string | null
+          updated_at: string | null
+          wicket_keeper: boolean | null
+        }
+        Insert: {
+          base_price: number
+          batting_role?: string | null
+          bowling_role?: string | null
+          category: string
+          created_at?: string | null
+          first_name: string
+          id?: number
+          image_url?: string | null
+          interested_teams?: string[] | null
+          last_name: string
+          middle_name?: string | null
+          player_type: string
+          province: string
+          sn: number
+          sold_price?: number | null
+          status?: string | null
+          team_name?: string | null
+          updated_at?: string | null
+          wicket_keeper?: boolean | null
+        }
+        Update: {
+          base_price?: number
+          batting_role?: string | null
+          bowling_role?: string | null
+          category?: string
+          created_at?: string | null
+          first_name?: string
+          id?: number
+          image_url?: string | null
+          interested_teams?: string[] | null
+          last_name?: string
+          middle_name?: string | null
+          player_type?: string
+          province?: string
+          sn?: number
+          sold_price?: number | null
+          status?: string | null
+          team_name?: string | null
+          updated_at?: string | null
+          wicket_keeper?: boolean | null
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          created_at: string | null
+          display_name: string
+          grade_a_count: number | null
+          grade_b_count: number | null
+          grade_c_count: number | null
+          id: number
+          name: string
+          remaining_purse: number | null
+          total_purse: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name: string
+          grade_a_count?: number | null
+          grade_b_count?: number | null
+          grade_c_count?: number | null
+          id?: number
+          name: string
+          remaining_purse?: number | null
+          total_purse?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string
+          grade_a_count?: number | null
+          grade_b_count?: number | null
+          grade_c_count?: number | null
+          id?: number
+          name?: string
+          remaining_purse?: number | null
+          total_purse?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
