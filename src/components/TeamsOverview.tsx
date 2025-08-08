@@ -1,7 +1,17 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, DollarSign, Award } from "lucide-react";
+import { Users, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Import team logos
+import BNK from "../../assets/club_logo/BNK.webp";
+import CHR from "../../assets/club_logo/CHR.webp";
+import JAB from "../../assets/club_logo/JAB.webp";
+import KAG from "../../assets/club_logo/KAGnew.jpeg";
+import KAY from "../../assets/club_logo/KAY.webp";
+import LUL from "../../assets/club_logo/LULnew.jpg";
+import POA from "../../assets/club_logo/POA.webp";
+import SPR from "../../assets/club_logo/SPR.webp";
 
 interface Player {
   id: number;
@@ -41,6 +51,17 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
     'lumbini_lions': 'team-8'
   };
 
+  const teamLogos: Record<string, string> = {
+    'janakpur_bolts': JAB,
+    'sudurpaschim_royals': SPR,
+    'karnali_yaks': KAY,
+    'chitwan_rhinos': CHR,
+    'kathmandu_gurkhas': KAG,
+    'biratnagar_kings': BNK,
+    'pokhara_avengers': POA,
+    'lumbini_lions': LUL
+  };
+
   const getTeamPlayers = (teamName: string) => {
     return players.filter(player => player.team_name === teamName);
   };
@@ -73,12 +94,15 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
     }
   };
 
+  // Rolled back slot placeholders; we simply list acquired players as before
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       {teams.map((team) => {
         const teamPlayers = getTeamPlayers(team.name);
         const sortedPlayers = sortPlayersByRole(teamPlayers);
         const totalSpent = 9000000 - team.remaining_purse; // 90 lakhs - remaining
+        const teamLogo = teamLogos[team.name];
         
         return (
           <Card 
@@ -93,6 +117,12 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
                 "text-center text-white relative overflow-hidden",
                 `bg-${teamColors[team.name] || 'primary'}`
               )}
+              style={{
+                backgroundImage: teamLogo ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${teamLogo})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
             >
               {/* Team Background Pattern */}
               <div className="absolute inset-0 opacity-10">
@@ -107,7 +137,6 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
                 {/* Purse Info */}
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center justify-center gap-1">
-                    <DollarSign className="w-4 h-4" />
                     <span>Remaining: NPR {(team.remaining_purse / 100000).toFixed(1)}L</span>
                   </div>
                   <div className="text-xs opacity-90">

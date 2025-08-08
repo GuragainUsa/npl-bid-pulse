@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Timer, DollarSign, Dice6 } from "lucide-react";
+import { Trophy, Timer, Dice6 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Team {
@@ -17,6 +17,9 @@ interface LiveAuctionStatusProps {
   luckyDrawActive: boolean;
   teams: Team[];
   interestedTeams: string[];
+  currentPlayer?: {
+    category: 'A' | 'B' | 'C';
+  } | null;
 }
 
 export function LiveAuctionStatus({
@@ -25,8 +28,16 @@ export function LiveAuctionStatus({
   auctionActive,
   luckyDrawActive,
   teams,
-  interestedTeams
+  interestedTeams,
+  currentPlayer
 }: LiveAuctionStatusProps) {
+  const formatTeamName = (teamName: string) => {
+    return teamName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const teamDisplayNames: Record<string, string> = {
     'janakpur_bolts': 'Janakpur Bolts',
     'sudurpaschim_royals': 'Sudurpaschim Royals',
@@ -64,21 +75,38 @@ export function LiveAuctionStatus({
           {currentBid ? (
             <>
               <div className="flex items-center justify-center gap-2">
-                <DollarSign className="w-5 h-5 text-success" />
-                <span className="text-2xl font-bold text-success">
-                  NPR {currentBid.toLocaleString()}
-                </span>
-              </div>
-              {highestBidder && (
-                <Badge 
-                  className={cn(
-                    "text-white font-medium px-3 py-1",
-                    `bg-${teamColors[highestBidder] || 'primary'}`
-                  )}
-                >
-                  Leading: {teamDisplayNames[highestBidder] || highestBidder}
-                </Badge>
-              )}
+                                  <span className="text-2xl font-bold text-success">
+                    NPR {currentBid.toLocaleString()}
+                  </span>
+                </div>
+                {highestBidder && (
+                  <Badge 
+                    className={cn(
+                      "text-white font-medium px-3 py-1",
+                      `bg-${teamColors[highestBidder] || 'primary'}`
+                    )}
+                  >
+                    Leading: {formatTeamName(highestBidder)}
+                  </Badge>
+                )}
+              {/* Show limit reached warning */}
+              {currentPlayer && (() => {
+                const bidLimits = {
+                  'A': 1500000, // 15L
+                  'B': 1000000, // 10L
+                  'C': 500000   // 5L
+                };
+                const currentLimit = bidLimits[currentPlayer.category];
+                
+                if (currentBid >= currentLimit) {
+                  return (
+                    <Badge variant="destructive" className="text-xs">
+                      Limit Reached: NPR {(currentLimit / 100000).toFixed(1)}L
+                    </Badge>
+                  );
+                }
+                return null;
+              })()}
             </>
           ) : (
             <div className="text-muted-foreground">
@@ -100,10 +128,7 @@ export function LiveAuctionStatus({
         <div className="flex justify-center">
           <Badge 
             variant={auctionActive ? "default" : "secondary"}
-            className={cn(
-              "px-4 py-2 text-sm font-medium",
-              auctionActive && "animate-pulse-glow"
-            )}
+            className="px-4 py-2 text-sm font-medium"
           >
             {auctionActive ? "🔴 LIVE AUCTION" : "⏸️ AUCTION PAUSED"}
           </Badge>
@@ -116,21 +141,34 @@ export function LiveAuctionStatus({
               Teams in Bidding War
             </h4>
             <div className="grid gap-2">
-              {interestedTeams.map((teamName) => (
-                <div 
-                  key={teamName}
-                  className={cn(
-                    "p-2 rounded-md text-sm font-medium text-center transition-all duration-200",
-                    `bg-${teamColors[teamName] || 'muted'}/20 border border-${teamColors[teamName] || 'border'}`,
-                    teamName === highestBidder && "ring-2 ring-primary animate-pulse-glow"
-                  )}
-                >
-                  {teamDisplayNames[teamName] || teamName}
-                  {teamName === highestBidder && (
-                    <Trophy className="w-4 h-4 inline-block ml-2 text-primary" />
-                  )}
+              {/* Show highest bidder first */}
+              {highestBidder && (
+                                  <div 
+                    key={highestBidder}
+                    className={cn(
+                      "p-2 rounded-md text-sm font-medium text-center transition-all duration-200",
+                      `bg-${teamColors[highestBidder] || 'muted'}/20 border border-${teamColors[highestBidder] || 'border'}`,
+                      "ring-2 ring-primary bg-primary/30"
+                    )}
+                  >
+                  {formatTeamName(highestBidder)}
+                  <Trophy className="w-4 h-4 inline-block ml-2 text-primary" />
                 </div>
-              ))}
+              )}
+              {/* Show other teams */}
+              {interestedTeams
+                .filter(teamName => teamName !== highestBidder)
+                .map((teamName) => (
+                  <div 
+                    key={teamName}
+                    className={cn(
+                      "p-2 rounded-md text-sm font-medium text-center transition-all duration-200",
+                      `bg-${teamColors[teamName] || 'muted'}/20 border border-${teamColors[teamName] || 'border'}`
+                    )}
+                  >
+                    {formatTeamName(teamName)}
+                  </div>
+                ))}
             </div>
           </div>
         )}

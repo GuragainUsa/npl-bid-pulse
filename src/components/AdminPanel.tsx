@@ -56,11 +56,34 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
   useEffect(() => {
     if (isVisible) {
       fetchData();
+      
+      // Set up real-time subscription for admin panel
+      const adminSubscription = supabase
+        .channel('admin-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'auction_state' }, () => {
+          console.log('AdminPanel: Auction state changed, refreshing...');
+          fetchData();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => {
+          console.log('AdminPanel: Players changed, refreshing...');
+          fetchData();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, () => {
+          console.log('AdminPanel: Teams changed, refreshing...');
+          fetchData();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(adminSubscription);
+      };
     }
   }, [isVisible]);
 
   const fetchData = async () => {
     try {
+      console.log('AdminPanel: Fetching data...');
+      
       // Fetch players
       const { data: playersData, error: playersError } = await supabase
         .from('players')
@@ -89,11 +112,15 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
       if (auctionData?.current_player_id) {
         const selectedPlayer = playersData?.find(p => p.id === auctionData.current_player_id);
         setCurrentPlayer(selectedPlayer || null);
+      } else {
+        setCurrentPlayer(null);
       }
       
       setCurrentBid(auctionData?.current_bid || 0);
       setAuctionActive(auctionData?.auction_active || false);
       setLuckyDrawActive(auctionData?.lucky_draw_active || false);
+
+      console.log('AdminPanel: Data fetch completed');
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -123,6 +150,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
       if (error) throw error;
 
+      // Update local state for immediate UI feedback
       setCurrentPlayer(player);
       setCurrentBid(player.base_price);
       setAuctionActive(true);
@@ -145,11 +173,49 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
   const placeBid = async (teamName: string) => {
     if (!currentPlayer) return;
 
+    // Define bid limits for each category
+    const bidLimits = {
+      'A': 1500000, // 15L
+      'B': 1000000, // 10L
+      'C': 500000   // 5L
+    };
+
     const bidIncrement = currentPlayer.category === 'C' ? 25000 : 50000;
+    const currentLimit = bidLimits[currentPlayer.category as keyof typeof bidLimits];
     const newBid = currentBid + bidIncrement;
 
     try {
-      // Update auction state
+      // Check if we're at or above the limit
+      if (currentBid >= currentLimit) {
+        // At limit - just add to interested teams without increasing bid
+        const { data: playerData, error: fetchError } = await supabase
+          .from('players')
+          .select('interested_teams')
+          .eq('id', currentPlayer.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        const interestedTeams = playerData?.interested_teams || [];
+        if (!interestedTeams.includes(teamName)) {
+          const { error: updateError } = await supabase
+            .from('players')
+            .update({
+              interested_teams: [...interestedTeams, teamName]
+            })
+            .eq('id', currentPlayer.id);
+
+          if (updateError) throw updateError;
+        }
+
+        toast({
+          title: "Team Added",
+          description: `${teams.find(t => t.name === teamName)?.display_name} added to interested teams (at limit: NPR ${(currentLimit / 100000).toFixed(1)}L)`,
+        });
+        return;
+      }
+
+      // Below limit - proceed with normal bidding
       const { error: auctionError } = await supabase
         .from('auction_state')
         .update({
@@ -181,6 +247,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
         if (updateError) throw updateError;
       }
 
+      // Update local state for immediate UI feedback
       setCurrentBid(newBid);
 
       toast({
@@ -267,12 +334,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
       if (resetError) throw resetError;
 
-      setCurrentPlayer(null);
-      setCurrentBid(0);
-      setAuctionActive(false);
-      setLuckyDrawActive(false);
-      
-      // Refresh data
+      // Refresh data to update the admin panel state
       fetchData();
 
     } catch (error) {
@@ -391,7 +453,16 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
                 <div className="flex gap-4 justify-center">
                   <Button
                     variant={auctionActive ? "destructive" : "default"}
-                    onClick={() => setAuctionActive(!auctionActive)}
+                    onClick={async () => {
+                      try {
+                        await supabase
+                          .from('auction_state')
+                          .update({ auction_active: !auctionActive })
+                          .eq('id', 1);
+                      } catch (error) {
+                        console.error('Error toggling auction:', error);
+                      }
+                    }}
                     className="flex items-center gap-2"
                   >
                     {auctionActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -400,7 +471,16 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
                   <Button
                     variant="gold"
-                    onClick={() => setLuckyDrawActive(!luckyDrawActive)}
+                    onClick={async () => {
+                      try {
+                        await supabase
+                          .from('auction_state')
+                          .update({ lucky_draw_active: !luckyDrawActive })
+                          .eq('id', 1);
+                      } catch (error) {
+                        console.error('Error toggling lucky draw:', error);
+                      }
+                    }}
                     className="flex items-center gap-2"
                   >
                     <Dice6 className="w-4 h-4" />
@@ -409,9 +489,26 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
                   <Button
                     variant="sold"
-                    onClick={() => {
-                      const highestBidder = teams.find(t => t.name)?.name; // You'd track this properly
-                      finalizeAuction(true, highestBidder);
+                    onClick={async () => {
+                      try {
+                        const { data: auctionState } = await supabase
+                          .from('auction_state')
+                          .select('highest_bidder')
+                          .eq('id', 1)
+                          .single();
+                        
+                        if (auctionState?.highest_bidder) {
+                          finalizeAuction(true, auctionState.highest_bidder);
+                        } else {
+                          toast({
+                            title: "Error",
+                            description: "No highest bidder found",
+                            variant: "destructive",
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Error getting highest bidder:', error);
+                      }
                     }}
                     className="flex items-center gap-2"
                     disabled={!currentPlayer}
