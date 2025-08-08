@@ -2,39 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* NPL Auction Design System - Nepal Premier League Theme
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Nepal-inspired color palette */
+    --background: 0 0% 98%;
+    --foreground: 220 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Deep crimson red - inspired by Nepal flag */
+    --primary: 345 85% 47%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Royal blue - complementary to red */
+    --secondary: 213 94% 68%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Gold accent - traditional Nepal color */
+    --accent: 45 93% 58%;
+    --accent-foreground: 220 25% 12%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Muted backgrounds */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 15% 46%;
+
+    /* Success green for sold players */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    /* Warning orange for bidding */
+    --warning: 25 95% 53%;
+    --warning-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 345 85% 47%;
+
+    /* Custom design tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(345 85% 47%), hsl(213 94% 68%));
+    --gradient-gold: linear-gradient(135deg, hsl(45 93% 58%), hsl(35 91% 55%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 98%), hsl(220 14% 96%));
+    
+    /* Auction-specific colors */
+    --category-a: 345 85% 47%; /* Premium red */
+    --category-b: 213 94% 68%; /* Royal blue */
+    --category-c: 142 76% 36%; /* Forest green */
+    
+    /* Team colors */
+    --team-1: 345 85% 47%; /* Janakpur Bolts */
+    --team-2: 262 83% 58%; /* Sudurpaschim Royals */
+    --team-3: 45 93% 58%; /* Karnali Yaks */
+    --team-4: 0 0% 45%; /* Chitwan Rhinos */
+    --team-5: 213 94% 68%; /* Kathmandu Gurkhas */
+    --team-6: 280 100% 70%; /* Biratnagar Kings */
+    --team-7: 142 76% 36%; /* Pokhara Avengers */
+    --team-8: 25 95% 53%; /* Lumbini Lions */
+
+    /* Animation and effects */
+    --shadow-auction: 0 20px 25px -5px hsl(345 85% 47% / 0.1), 0 10px 10px -5px hsl(345 85% 47% / 0.04);
+    --shadow-glow: 0 0 30px hsl(345 85% 47% / 0.3);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
