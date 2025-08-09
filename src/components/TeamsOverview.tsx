@@ -1,9 +1,9 @@
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Award, Crown, Star } from "lucide-react";
+import { Crown, Star, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Import team logos
 import BNK from "../../assets/club_logo/BNK.webp";
 import CHR from "../../assets/club_logo/CHR.webp";
 import JAB from "../../assets/club_logo/JAB.webp";
@@ -17,12 +17,12 @@ interface Player {
   id: number;
   first_name: string;
   last_name: string;
-  category: 'A' | 'B' | 'C' | 'S' | 'LT';
+  category: "A" | "B" | "C" | "S" | "LT";
   player_type: string;
   wicket_keeper: boolean;
   sold_price?: number;
   team_name?: string;
-  status?: 'sold' | 'unsold' | 'retained';
+  status?: "sold" | "unsold" | "retained";
 }
 
 interface Team {
@@ -43,234 +43,219 @@ interface TeamsOverviewProps {
 }
 
 export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+
   const teamColors: Record<string, string> = {
-    'janakpur_bolts': 'team-1',
-    'sudurpaschim_royals': 'team-2', 
-    'karnali_yaks': 'team-3',
-    'chitwan_rhinos': 'team-4',
-    'kathmandu_gurkhas': 'team-5',
-    'biratnagar_kings': 'team-6',
-    'pokhara_avengers': 'team-7',
-    'lumbini_lions': 'team-8'
+    janakpur_bolts: "team-1",
+    sudurpaschim_royals: "team-2",
+    karnali_yaks: "team-3",
+    chitwan_rhinos: "team-4",
+    kathmandu_gurkhas: "team-5",
+    biratnagar_kings: "team-6",
+    pokhara_avengers: "team-7",
+    lumbini_lions: "team-8",
   };
 
   const teamLogos: Record<string, string> = {
-    'janakpur_bolts': JAB,
-    'sudurpaschim_royals': SPR,
-    'karnali_yaks': KAY,
-    'chitwan_rhinos': CHR,
-    'kathmandu_gurkhas': KAG,
-    'biratnagar_kings': BNK,
-    'pokhara_avengers': POA,
-    'lumbini_lions': LUL
+    janakpur_bolts: JAB,
+    sudurpaschim_royals: SPR,
+    karnali_yaks: KAY,
+    chitwan_rhinos: CHR,
+    kathmandu_gurkhas: KAG,
+    biratnagar_kings: BNK,
+    pokhara_avengers: POA,
+    lumbini_lions: LUL,
   };
 
-  const getTeamPlayers = (teamName: string) => {
-    return players.filter(player => player.team_name === teamName);
-  };
+  const getTeamPlayers = (teamName: string) =>
+    players.filter((player) => player.team_name === teamName);
 
   const sortPlayersByRole = (players: Player[]) => {
-    const roleOrder = ['Batsman', 'Wicket Keeper', 'All-rounder', 'Bowler'];
+    const categoryOrder = { S: 0, A: 1, B: 2, C: 3, LT: 4 };
+    const roleOrder = ["Batsman", "Wicket Keeper", "All-rounder", "Bowler"];
     return players.sort((a, b) => {
-      // First sort by role
-      const roleA = a.wicket_keeper ? 'Wicket Keeper' : a.player_type;
-      const roleB = b.wicket_keeper ? 'Wicket Keeper' : b.player_type;
-      
-      const indexA = roleOrder.indexOf(roleA);
-      const indexB = roleOrder.indexOf(roleB);
-      
-      if (indexA !== indexB) {
-        return indexA - indexB;
-      }
-      
-      // If same role, sort by category (S, A, B, C, LT)
-      const categoryOrder = { 'S': 0, 'A': 1, 'B': 2, 'C': 3, 'LT': 4 };
-      return (categoryOrder[a.category] || 5) - (categoryOrder[b.category] || 5);
+      const categoryDiff =
+        (categoryOrder[a.category] ?? 5) - (categoryOrder[b.category] ?? 5);
+      if (categoryDiff !== 0) return categoryDiff;
+      const roleA = a.wicket_keeper ? "Wicket Keeper" : a.player_type;
+      const roleB = b.wicket_keeper ? "Wicket Keeper" : b.player_type;
+      return roleOrder.indexOf(roleA) - roleOrder.indexOf(roleB);
     });
   };
 
-  const getCategoryColor = (category: 'A' | 'B' | 'C' | 'S' | 'LT') => {
+  const getCategoryDisplayName = (category: Player["category"]) => {
     switch (category) {
-      case 'S': return 'bg-category-s';
-      case 'A': return 'bg-category-a';
-      case 'B': return 'bg-category-b';
-      case 'C': return 'bg-category-c';
-      case 'LT': return 'bg-category-lt';
-      default: return 'bg-muted';
+      case "S":
+        return "Marquee";
+      case "A":
+        return "A";
+      case "B":
+        return "B";
+      case "C":
+        return "C";
+      case "LT":
+        return "Local Talent";
+      default:
+        return category;
     }
   };
 
-  const getCategoryDisplayName = (category: 'A' | 'B' | 'C' | 'S' | 'LT') => {
-    switch (category) {
-      case 'S': return 'Marquee';
-      case 'A': return 'A';
-      case 'B': return 'B';
-      case 'C': return 'C';
-      case 'LT': return 'Local Talent';
-      default: return category;
-    }
+  const TeamDetails = ({
+    team,
+    showRole,
+  }: {
+    team: Team;
+    showRole: boolean;
+  }) => {
+    const teamPlayers = getTeamPlayers(team.name);
+    const sortedPlayers = sortPlayersByRole(teamPlayers);
+    const totalSpent = 11000000 - team.remaining_purse;
+    const teamLogo = teamLogos[team.name];
+    const teamColorClass = teamColors[team.name] || "primary";
+
+    return (
+      <Card
+        className={cn(
+          "h-full border border-gray-300",
+          `bg-${teamColorClass}/10`
+        )}
+      >
+        {/* Header */}
+        <CardHeader
+          className={cn(
+            "text-center text-white relative overflow-hidden",
+            `bg-${teamColorClass}`
+          )}
+          style={{
+            backgroundImage: teamLogo
+              ? `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${teamLogo})`
+              : undefined,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <CardTitle className="text-lg font-bold mb-2">
+            {team.display_name}
+          </CardTitle>
+          <div className="space-y-1 text-sm">
+            <div>Remaining: {(team.remaining_purse / 100000).toFixed(1)}L</div>
+            <div className="text-xs opacity-90">
+              Spent: {(totalSpent / 100000).toFixed(1)}L
+            </div>
+          </div>
+        </CardHeader>
+
+        {/* Content */}
+        <CardContent className="p-4 bg-white">
+          {/* Stats */}
+          <div className="mb-4 grid grid-cols-5 gap-2 text-center text-sm">
+            <div>
+              <Crown className="w-3 h-3 inline-block mr-1" /> Marquee{" "}
+              <Badge variant="outline">{team.marquee_count}/1</Badge>
+            </div>
+            <div>
+              Grade A <Badge variant="outline">{team.grade_a_count}/3</Badge>
+            </div>
+            <div>
+              Grade B <Badge variant="outline">{team.grade_b_count}/4</Badge>
+            </div>
+            <div>
+              Grade C <Badge variant="outline">{team.grade_c_count}/3</Badge>
+            </div>
+            <div>
+              <Star className="w-3 h-3 inline-block mr-1" /> Local{" "}
+              <Badge variant="outline">{team.local_talent_count}</Badge>
+            </div>
+          </div>
+
+          {/* Player Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full border border-gray-200 text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-2 py-1 text-left">Name</th>
+                  {showRole && (
+                    <th className="border px-2 py-1 text-left">Role</th>
+                  )}
+                  <th className="border px-2 py-1">Category</th>
+                  <th className="border px-2 py-1">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedPlayers.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={showRole ? 4 : 3}
+                      className="text-center p-4 text-gray-500"
+                    >
+                      No players acquired
+                    </td>
+                  </tr>
+                ) : (
+                  sortedPlayers.map((player) => (
+                    <tr key={player.id}>
+                      <td className="border px-2 py-1">
+                        {player.first_name} {player.last_name}
+                      </td>
+                      {showRole && (
+                        <td className="border px-2 py-1">
+                          {player.wicket_keeper
+                            ? "Wicket Keeper"
+                            : player.player_type}
+                        </td>
+                      )}
+                      <td className="border px-2 py-1 text-center">
+                        {getCategoryDisplayName(player.category)}
+                      </td>
+                      <td className="border px-2 py-1 text-center">
+                        {((player.sold_price || 0) / 100000).toFixed(1)}L
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-      {teams.map((team) => {
-        const teamPlayers = getTeamPlayers(team.name);
-        const sortedPlayers = sortPlayersByRole(teamPlayers);
-        const totalSpent = 11000000 - team.remaining_purse; // 110 lakhs - remaining . adding purse of marquee
-        const teamLogo = teamLogos[team.name];
-        
-        return (
-          <Card 
+    <>
+      {/* 4 teams per row */}
+      <div className="grid grid-cols-4 gap-6">
+        {teams.map((team) => (
+          <div
             key={team.id}
-            className={cn(
-              "h-full transition-all duration-200 hover:shadow-lg border-2",
-              `hover:border-${teamColors[team.name] || 'primary'}/50`
-            )}
+            onClick={() => setSelectedTeam(team)}
+            className="cursor-pointer"
           >
-            <CardHeader 
-              className={cn(
-                "text-center text-white relative overflow-hidden",
-                `bg-${teamColors[team.name] || 'primary'}`
-              )}
-              style={{
-                backgroundImage: teamLogo ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${teamLogo})` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            >
-              {/* Team Background Pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
-              </div>
-              
-              <div className="relative z-10">
-                <CardTitle className="text-lg font-bold mb-2">
-                  {team.display_name}
-                </CardTitle>
-                
-                {/* Purse Info */}
-                <div className="space-y-1 text-sm">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>Remaining: NPR {(team.remaining_purse / 100000).toFixed(1)}L</span>
-                  </div>
-                  <div className="text-xs opacity-90">
-                    Spent: NPR {(totalSpent / 100000).toFixed(1)}L
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="p-4">
-              {/* Team Stats */}
-              <div className="mb-4 grid grid-cols-5 gap-2 text-center">
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                    <Crown className="w-3 h-3" />
-                    Marquee
-                  </div>
-                  <Badge 
-                    variant={team.marquee_count >= 1 ? "destructive" : "outline"}
-                    className="w-full justify-center"
-                  >
-                    {team.marquee_count}/1
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground">Grade A</div>
-                  <Badge 
-                    variant={team.grade_a_count >= 3 ? "destructive" : "outline"}
-                    className="w-full justify-center"
-                  >
-                    {team.grade_a_count}/3
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground">Grade B</div>
-                  <Badge 
-                    variant={team.grade_b_count >= 4 ? "destructive" : "outline"}
-                    className="w-full justify-center"
-                  >
-                    {team.grade_b_count}/4
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground">Grade C</div>
-                  <Badge 
-                    variant={team.grade_c_count >= 3 ? "destructive" : "outline"}
-                    className="w-full justify-center"
-                  >
-                    {team.grade_c_count}/3
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                    <Star className="w-3 h-3" />
-                    Local
-                  </div>
-                  <Badge 
-                    variant="outline"
-                    className="w-full justify-center"
-                  >
-                    {team.local_talent_count}
-                  </Badge>
-                </div>
-              </div>
+            <TeamDetails team={team} showRole={false} />
+          </div>
+        ))}
+      </div>
 
-              {/* Players List */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span>Squad ({sortedPlayers.length})</span>
-                </div>
-                
-                {sortedPlayers.length === 0 ? (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <Award className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">No players acquired</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {sortedPlayers.map((player) => (
-                      <div 
-                        key={player.id}
-                        className={cn(
-                          "flex items-center justify-between p-2 rounded text-white text-sm",
-                          getCategoryColor(player.category)
-                        )}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">
-                            {player.first_name} {player.last_name}
-                          </div>
-                          <div className="text-xs opacity-90">
-                            {player.wicket_keeper ? 'Wicket Keeper' : player.player_type}
-                            {player.status === 'retained' && (
-                              <Badge variant="secondary" className="ml-1 text-xs">
-                                Retained
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-xs text-right">
-                          <div className="font-medium">
-                            {player.status === 'retained' ? 'Retained' : 
-                             player.category === 'LT' ? 'Free' : 
-                             `NPR ${((player.sold_price || 0) / 100000).toFixed(1)}L`}
-                          </div>
-                          <div className="opacity-80">
-                            {getCategoryDisplayName(player.category)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
+      {/* Modal */}
+      {selectedTeam && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setSelectedTeam(null)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative overflow-y-auto max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedTeam(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <TeamDetails team={selectedTeam} showRole={true} />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

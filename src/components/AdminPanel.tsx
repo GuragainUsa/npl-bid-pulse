@@ -138,7 +138,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
         .from('auction_state')
         .update({
           current_player_id: playerId,
-          current_bid: player.base_price,
+          current_bid: 0,
           highest_bidder: null,
           auction_active: true
         })
@@ -148,7 +148,8 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
       // Update local state for immediate UI feedback
       setCurrentPlayer(player);
-      setCurrentBid(player.base_price);
+      setCurrentBid(0);
+      // setCurrentBid(player.base_price);
       setAuctionActive(true);
 
       toast({
@@ -179,8 +180,16 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
     const bidIncrement = currentPlayer.category === 'C' ? 25000 : 50000;
     const currentLimit = bidLimits[currentPlayer.category as keyof typeof bidLimits];
-    const newBid = currentBid + bidIncrement;
-
+    let newBid;    
+    //
+    if (currentBid === 0) {
+      // First bid starts at base price
+      newBid = currentPlayer.base_price;
+    } else {
+      newBid = currentBid + bidIncrement;
+    }
+        //
+    // const newBid = currentBid + bidIncrement;
     try {
       // Check if we're at or above the limit
       if (currentLimit && currentBid >= currentLimit) {
@@ -578,128 +587,6 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
                 </div>
               </div>
               
-              {/* Retained Players Management */}
-              {players.filter(p => p.status === 'retained').length > 0 && (
-                <div className="mt-6 pt-6 border-t">
-                  <h4 className="font-semibold mb-3">Retained Players Management</h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {players.filter(p => p.status === 'retained').map((player) => (
-                      <div key={player.id} className="flex items-center justify-between p-2 bg-muted rounded">
-                        <span className="text-sm">
-                          {player.first_name} {player.last_name} ({getCategoryDisplayName(player.category)})
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">
-                            {player.team_name ? `Assigned to: ${teams.find(t => t.name === player.team_name)?.display_name}` : 'Not assigned'}
-                          </span>
-                          {!player.team_name && (
-                            <Select onValueChange={async (teamName) => {
-                              try {
-                                const { error } = await supabase
-                                  .from('players')
-                                  .update({ team_name: teamName })
-                                  .eq('id', player.id);
-                                
-                                if (error) throw error;
-                                
-                                toast({
-                                  title: "Player Assigned",
-                                  description: `${player.first_name} ${player.last_name} assigned to ${teams.find(t => t.name === teamName)?.display_name}`,
-                                });
-                                
-                                fetchData();
-                              } catch (error) {
-                                console.error('Error assigning player:', error);
-                                toast({
-                                  title: "Error",
-                                  description: "Failed to assign player to team",
-                                  variant: "destructive",
-                                });
-                              }
-                            }}>
-                              <SelectTrigger className="w-32 h-6 text-xs">
-                                <SelectValue placeholder="Assign" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {teams.map((team) => (
-                                  <SelectItem key={team.name} value={team.name}>
-                                    {team.display_name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    Note: Retained players need to be assigned to teams to appear in team overviews.
-                  </div>
-                  
-                  {/* Auto-assign button */}
-                  <div className="mt-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          // Get all unassigned players (both retained and sold without team_name)
-                          const unassignedPlayers = players.filter(p => 
-                            (p.status === 'retained' || p.status === 'sold') && !p.team_name
-                          );
-                          const teamNames = teams.map(t => t.name);
-                          
-                          if (unassignedPlayers.length === 0) {
-                            toast({
-                              title: "No Action Needed",
-                              description: "All retained and sold players are already assigned to teams.",
-                            });
-                            return;
-                          }
-                          
-                          console.log(`Auto-assigning ${unassignedPlayers.length} players...`);
-                          
-                          // Auto-assign using round-robin
-                          let successCount = 0;
-                          for (let i = 0; i < unassignedPlayers.length; i++) {
-                            const player = unassignedPlayers[i];
-                            const teamName = teamNames[i % teamNames.length];
-                            
-                            const { error } = await supabase
-                              .from('players')
-                              .update({ team_name: teamName })
-                              .eq('id', player.id);
-                            
-                            if (error) {
-                              console.error(`Error assigning player ${player.first_name} ${player.last_name}:`, error);
-                            } else {
-                              successCount++;
-                              console.log(`Assigned ${player.first_name} ${player.last_name} (${player.status}) to ${teams.find(t => t.name === teamName)?.display_name}`);
-                            }
-                          }
-                          
-                          toast({
-                            title: "Auto-assignment Complete",
-                            description: `${successCount} players have been assigned to teams.`,
-                          });
-                          
-                          fetchData();
-                        } catch (error) {
-                          console.error('Error auto-assigning players:', error);
-                          toast({
-                            title: "Error",
-                            description: "Failed to auto-assign players",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                    >
-                      Auto-assign Players
-                    </Button>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </CardContent>

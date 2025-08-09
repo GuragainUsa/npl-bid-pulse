@@ -72,9 +72,9 @@ export function CurrentPlayer({ player, currentBid, lastAuctionedPlayer }: Curre
   const getCategoryDisplayName = (category: 'A' | 'B' | 'C' | 'S' | 'LT') => {
     switch (category) {
       case 'S': return 'Marquee';
-      case 'A': return 'Grade A';
-      case 'B': return 'Grade B';
-      case 'C': return 'Grade C';
+      case 'A': return 'Category A';
+      case 'B': return 'Category B';
+      case 'C': return 'Category C';
       case 'LT': return 'Local Talent';
       default: return category;
     }
