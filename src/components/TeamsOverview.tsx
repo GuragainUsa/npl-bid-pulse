@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Award } from "lucide-react";
+import { Users, Award, Crown, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Import team logos
@@ -17,11 +17,12 @@ interface Player {
   id: number;
   first_name: string;
   last_name: string;
-  category: 'A' | 'B' | 'C';
+  category: 'A' | 'B' | 'C' | 'S' | 'LT';
   player_type: string;
   wicket_keeper: boolean;
-  sold_price: number;
+  sold_price?: number;
   team_name?: string;
+  status?: 'sold' | 'unsold' | 'retained';
 }
 
 interface Team {
@@ -32,6 +33,8 @@ interface Team {
   grade_a_count: number;
   grade_b_count: number;
   grade_c_count: number;
+  marquee_count: number;
+  local_talent_count: number;
 }
 
 interface TeamsOverviewProps {
@@ -80,28 +83,40 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
         return indexA - indexB;
       }
       
-      // If same role, sort by category (A, B, C)
-      return a.category.localeCompare(b.category);
+      // If same role, sort by category (S, A, B, C, LT)
+      const categoryOrder = { 'S': 0, 'A': 1, 'B': 2, 'C': 3, 'LT': 4 };
+      return (categoryOrder[a.category] || 5) - (categoryOrder[b.category] || 5);
     });
   };
 
-  const getCategoryColor = (category: 'A' | 'B' | 'C') => {
+  const getCategoryColor = (category: 'A' | 'B' | 'C' | 'S' | 'LT') => {
     switch (category) {
+      case 'S': return 'bg-category-s';
       case 'A': return 'bg-category-a';
       case 'B': return 'bg-category-b';
       case 'C': return 'bg-category-c';
+      case 'LT': return 'bg-category-lt';
       default: return 'bg-muted';
     }
   };
 
-  // Rolled back slot placeholders; we simply list acquired players as before
+  const getCategoryDisplayName = (category: 'A' | 'B' | 'C' | 'S' | 'LT') => {
+    switch (category) {
+      case 'S': return 'Marquee';
+      case 'A': return 'A';
+      case 'B': return 'B';
+      case 'C': return 'C';
+      case 'LT': return 'Local Talent';
+      default: return category;
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       {teams.map((team) => {
         const teamPlayers = getTeamPlayers(team.name);
         const sortedPlayers = sortPlayersByRole(teamPlayers);
-        const totalSpent = 9000000 - team.remaining_purse; // 90 lakhs - remaining
+        const totalSpent = 11000000 - team.remaining_purse; // 110 lakhs - remaining . adding purse of marquee
         const teamLogo = teamLogos[team.name];
         
         return (
@@ -148,7 +163,19 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
             
             <CardContent className="p-4">
               {/* Team Stats */}
-              <div className="mb-4 grid grid-cols-3 gap-2 text-center">
+              <div className="mb-4 grid grid-cols-5 gap-2 text-center">
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                    <Crown className="w-3 h-3" />
+                    Marquee
+                  </div>
+                  <Badge 
+                    variant={team.marquee_count >= 1 ? "destructive" : "outline"}
+                    className="w-full justify-center"
+                  >
+                    {team.marquee_count}/1
+                  </Badge>
+                </div>
                 <div className="space-y-1">
                   <div className="text-xs text-muted-foreground">Grade A</div>
                   <Badge 
@@ -174,6 +201,18 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
                     className="w-full justify-center"
                   >
                     {team.grade_c_count}/3
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                    <Star className="w-3 h-3" />
+                    Local
+                  </div>
+                  <Badge 
+                    variant="outline"
+                    className="w-full justify-center"
+                  >
+                    {team.local_talent_count}
                   </Badge>
                 </div>
               </div>
@@ -206,14 +245,21 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
                           </div>
                           <div className="text-xs opacity-90">
                             {player.wicket_keeper ? 'Wicket Keeper' : player.player_type}
+                            {player.status === 'retained' && (
+                              <Badge variant="secondary" className="ml-1 text-xs">
+                                Retained
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="text-xs text-right">
                           <div className="font-medium">
-                            {(player.sold_price / 100000).toFixed(1)}L
+                            {player.status === 'retained' ? 'Retained' : 
+                             player.category === 'LT' ? 'Free' : 
+                             `NPR ${((player.sold_price || 0) / 100000).toFixed(1)}L`}
                           </div>
                           <div className="opacity-80">
-                            Cat {player.category}
+                            {getCategoryDisplayName(player.category)}
                           </div>
                         </div>
                       </div>

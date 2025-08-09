@@ -23,25 +23,22 @@ export default function Index() {
   const [lastAuctionedPlayer, setLastAuctionedPlayer] = useState(null);
 
   useEffect(() => {
-    fetchData();
+    initializeApp();
     
     // Set up real-time subscriptions
     const auctionSubscription = supabase
       .channel('auction-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'auction_state' }, (payload) => {
-        console.log('Auction state changed:', payload);
         fetchData();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, (payload) => {
-        console.log('Players changed:', payload);
         fetchData();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, (payload) => {
-        console.log('Teams changed:', payload);
         fetchData();
       })
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        // Subscription status handled silently
       });
 
     return () => {
@@ -51,9 +48,79 @@ export default function Index() {
 
   const [auctionData, setAuctionData] = useState(null);
 
+  const initializeApp = async () => {
+    try {
+      // First fetch all data
+      await fetchData();
+      
+      // Then ensure retained and sold players are properly assigned to teams
+      await ensurePlayersAssignedToTeams();
+    } catch (error) {
+      console.error('Error initializing app:', error);
+    }
+  };
+
+  const ensurePlayersAssignedToTeams = async () => {
+    try {
+      // Get all players with status 'sold' or 'retained' but no team_name
+      const { data: unassignedPlayers, error: playersError } = await supabase
+        .from('players')
+        .select('*')
+        .in('status', ['sold', 'retained'])
+        .is('team_name', null);
+
+      if (playersError) {
+        console.error('Error fetching unassigned players:', playersError);
+        return;
+      }
+
+      if (!unassignedPlayers || unassignedPlayers.length === 0) {
+        return; // All players are properly assigned
+      }
+
+      // Get all teams
+      const { data: allTeams, error: teamsError } = await supabase
+        .from('teams')
+        .select('*');
+
+      if (teamsError) {
+        console.error('Error fetching teams:', teamsError);
+        return;
+      }
+
+      if (!allTeams || allTeams.length === 0) {
+        console.error('No teams found');
+        return;
+      }
+
+      console.log(`Found ${unassignedPlayers.length} unassigned players. Auto-assigning...`);
+
+      // Auto-assign using round-robin
+      for (let i = 0; i < unassignedPlayers.length; i++) {
+        const player = unassignedPlayers[i];
+        const team = allTeams[i % allTeams.length];
+
+        const { error: updateError } = await supabase
+          .from('players')
+          .update({ team_name: team.name })
+          .eq('id', player.id);
+
+        if (updateError) {
+          console.error(`Error assigning player ${player.first_name} ${player.last_name}:`, updateError);
+        } else {
+          console.log(`Assigned ${player.first_name} ${player.last_name} (${player.status}) to ${team.display_name}`);
+        }
+      }
+
+      // Refresh data after assignments
+      await fetchData();
+    } catch (error) {
+      console.error('Error ensuring players are assigned to teams:', error);
+    }
+  };
+
   const fetchData = async () => {
     try {
-      console.log('Fetching data...');
       
       // Fetch auction state
       const { data: auctionStateData, error: auctionError } = await supabase
@@ -66,7 +133,6 @@ export default function Index() {
         return;
       }
 
-      console.log('Auction state data:', auctionStateData);
       setAuctionData(auctionStateData);
 
       // Fetch current player if any
@@ -80,7 +146,6 @@ export default function Index() {
         if (playerError) {
           console.error('Error fetching current player:', playerError);
         } else {
-          console.log('Current player data:', playerData);
           setCurrentPlayer(playerData);
           setInterestedTeams(playerData?.interested_teams || []);
         }
@@ -126,8 +191,6 @@ export default function Index() {
       setAuctionActive(auctionStateData?.auction_active || false);
       setLuckyDrawActive(auctionStateData?.lucky_draw_active || false);
 
-      console.log('Data fetch completed');
-
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -157,21 +220,22 @@ export default function Index() {
 
               {/* Right Sidebar - Live Status */}
               <div className="lg:col-span-1">
-                              <LiveAuctionStatus
-                currentBid={currentBid}
-                highestBidder={auctionData?.highest_bidder || null}
-                auctionActive={auctionActive}
-                luckyDrawActive={luckyDrawActive}
-                teams={teams}
-                interestedTeams={interestedTeams}
-                currentPlayer={currentPlayer}
-              />
+                <LiveAuctionStatus
+                  currentBid={currentBid}
+                  highestBidder={auctionData?.highest_bidder || null}
+                  auctionActive={auctionActive}
+                  luckyDrawActive={luckyDrawActive}
+                  teams={teams}
+                  interestedTeams={interestedTeams}
+                  currentPlayer={currentPlayer}
+                  players={players}
+                />
               </div>
             </div>
           </div>
         ) : (
           <div className="max-w-7xl mx-auto p-6">
-            <TeamsOverview teams={teams} players={players.filter(p => p.status === 'sold')} />
+            <TeamsOverview teams={teams} players={players.filter(p => p.status === 'sold' || p.status === 'retained')} />
           </div>
         )}
       </div>

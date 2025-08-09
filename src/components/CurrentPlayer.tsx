@@ -14,12 +14,12 @@ interface Player {
   player_type: string;
   batting_role?: string;
   bowling_role?: string;
-  category: 'A' | 'B' | 'C';
+  category: 'A' | 'B' | 'C' | 'S' | 'LT';
   province: string;
   wicket_keeper: boolean;
   image_url?: string;
   base_price: number;
-  status?: 'sold' | 'unsold';
+  status?: 'sold' | 'unsold' | 'retained';
   team_name?: string;
   sold_price?: number;
   updated_at?: string;
@@ -62,9 +62,22 @@ export function CurrentPlayer({ player, currentBid, lastAuctionedPlayer }: Curre
 
   const fullName = `${displayPlayer.first_name}${displayPlayer.middle_name ? ` ${displayPlayer.middle_name}` : ''} ${displayPlayer.last_name}`;
   const categoryColors = {
+    S: 'category-s',
     A: 'category-a',
     B: 'category-b', 
-    C: 'category-c'
+    C: 'category-c',
+    LT: 'category-lt'
+  };
+
+  const getCategoryDisplayName = (category: 'A' | 'B' | 'C' | 'S' | 'LT') => {
+    switch (category) {
+      case 'S': return 'Marquee';
+      case 'A': return 'Grade A';
+      case 'B': return 'Grade B';
+      case 'C': return 'Grade C';
+      case 'LT': return 'Local Talent';
+      default: return category;
+    }
   };
 
   return (
@@ -101,7 +114,7 @@ export function CurrentPlayer({ player, currentBid, lastAuctionedPlayer }: Curre
                 `bg-${categoryColors[displayPlayer.category]} text-white border-0`
               )}
             >
-              Category {displayPlayer.category}
+              {getCategoryDisplayName(displayPlayer.category)}
             </Badge>
           </div>
 
@@ -123,6 +136,11 @@ export function CurrentPlayer({ player, currentBid, lastAuctionedPlayer }: Curre
                 <Badge className="bg-success text-success-foreground px-3 py-1">
                   <CheckCircle className="w-4 h-4 mr-1" />
                   SOLD
+                </Badge>
+              ) : displayPlayer.status === 'retained' ? (
+                <Badge className="bg-secondary text-secondary-foreground px-3 py-1">
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  RETAINED
                 </Badge>
               ) : (
                 <Badge className="bg-destructive text-destructive-foreground px-3 py-1">
@@ -174,6 +192,11 @@ export function CurrentPlayer({ player, currentBid, lastAuctionedPlayer }: Curre
                     </div>
                   </div>
                 )}
+                {displayPlayer.status === 'retained' && (
+                  <div className="text-lg font-medium text-secondary">
+                    Retained by Team
+                  </div>
+                )}
                 {displayPlayer.status === 'unsold' && (
                   <div className="text-lg font-medium text-destructive">
                     Remains Unsold
@@ -186,11 +209,11 @@ export function CurrentPlayer({ player, currentBid, lastAuctionedPlayer }: Curre
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-lg">Base Price:</span>
                   <span className="text-xl font-bold text-primary">
-                    NPR {displayPlayer.base_price.toLocaleString()}
+                    {displayPlayer.category === 'LT' ? 'FREE' : `NPR ${displayPlayer.base_price.toLocaleString()}`}
                   </span>
                 </div>
                 
-                {currentBid && currentBid > displayPlayer.base_price && (
+                {currentBid && currentBid > displayPlayer.base_price && displayPlayer.category !== 'LT' && (
                   <div className="text-center space-y-2">
                     <Button variant="bid" size="lg" className="pointer-events-none">
                       Current Bid: NPR {currentBid.toLocaleString()}
@@ -198,19 +221,20 @@ export function CurrentPlayer({ player, currentBid, lastAuctionedPlayer }: Curre
                     {/* Show bid limit */}
                     {(() => {
                       const bidLimits = {
+                        'S': 2000000, // 20L for Marquee
                         'A': 1500000, // 15L
                         'B': 1000000, // 10L
                         'C': 500000   // 5L
                       };
-                      const currentLimit = bidLimits[displayPlayer.category];
+                      const currentLimit = bidLimits[displayPlayer.category as keyof typeof bidLimits];
                       
-                      if (currentBid >= currentLimit) {
+                      if (currentLimit && currentBid >= currentLimit) {
                         return (
                           <div className="text-sm text-destructive font-medium">
                             Limit Reached: NPR {(currentLimit / 100000).toFixed(1)}L
                           </div>
                         );
-                      } else {
+                      } else if (currentLimit) {
                         return (
                           <div className="text-sm text-muted-foreground">
                             Limit: NPR {(currentLimit / 100000).toFixed(1)}L

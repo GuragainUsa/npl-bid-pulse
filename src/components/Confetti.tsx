@@ -28,7 +28,7 @@ export function Confetti({ isActive, onComplete }: ConfettiProps) {
         rotation: Math.random() * 360,
         scale: Math.random() * 0.5 + 0.5,
         color: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'][Math.floor(Math.random() * 7)],
-        animationDuration: Math.random() * 2 + 2
+        animationDuration: Math.random() * 2 + 4
       }));
 
       setPieces(newPieces);

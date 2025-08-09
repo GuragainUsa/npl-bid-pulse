@@ -26,6 +26,8 @@ interface Team {
   name: string;
   display_name: string;
   remaining_purse: number;
+  marquee_count: number;
+  local_talent_count: number;
 }
 
 interface AdminPanelProps {
@@ -61,15 +63,12 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
       const adminSubscription = supabase
         .channel('admin-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'auction_state' }, () => {
-          console.log('AdminPanel: Auction state changed, refreshing...');
           fetchData();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => {
-          console.log('AdminPanel: Players changed, refreshing...');
           fetchData();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, () => {
-          console.log('AdminPanel: Teams changed, refreshing...');
           fetchData();
         })
         .subscribe();
@@ -82,7 +81,6 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
   const fetchData = async () => {
     try {
-      console.log('AdminPanel: Fetching data...');
       
       // Fetch players
       const { data: playersData, error: playersError } = await supabase
@@ -119,8 +117,6 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
       setCurrentBid(auctionData?.current_bid || 0);
       setAuctionActive(auctionData?.auction_active || false);
       setLuckyDrawActive(auctionData?.lucky_draw_active || false);
-
-      console.log('AdminPanel: Data fetch completed');
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -175,6 +171,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
     // Define bid limits for each category
     const bidLimits = {
+      'S': 2000000, // 20L for Marquee
       'A': 1500000, // 15L
       'B': 1000000, // 10L
       'C': 500000   // 5L
@@ -186,7 +183,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
 
     try {
       // Check if we're at or above the limit
-      if (currentBid >= currentLimit) {
+      if (currentLimit && currentBid >= currentLimit) {
         // At limit - just add to interested teams without increasing bid
         const { data: playerData, error: fetchError } = await supabase
           .from('players')
@@ -286,14 +283,22 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
         const team = teams.find(t => t.name === winningTeam);
         if (team) {
           const newPurse = team.remaining_purse - currentBid;
+          
+          // Determine which count field to update based on category
+          let updateFields: any = { remaining_purse: newPurse };
+          
+          if (currentPlayer.category === 'S') {
+            updateFields.marquee_count = (team.marquee_count || 0) + 1;
+          } else if (currentPlayer.category === 'LT') {
+            updateFields.local_talent_count = (team.local_talent_count || 0) + 1;
+          } else {
           const categoryField = `grade_${currentPlayer.category.toLowerCase()}_count`;
+            updateFields[categoryField] = (team[categoryField as keyof Team] as number || 0) + 1;
+          }
           
           const { error: teamError } = await supabase
             .from('teams')
-            .update({
-              remaining_purse: newPurse,
-              [categoryField]: team[categoryField as keyof Team] as number + 1
-            })
+            .update(updateFields)
             .eq('name', winningTeam);
 
           if (teamError) throw teamError;
@@ -347,6 +352,17 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
     }
   };
 
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case 'S': return 'Marquee';
+      case 'A': return 'Grade A';
+      case 'B': return 'Grade B';
+      case 'C': return 'Grade C';
+      case 'LT': return 'Local Talent';
+      default: return category;
+    }
+  };
+
   if (!isVisible) return null;
 
   const availablePlayers = players.filter(p => !p.status);
@@ -383,7 +399,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
                   <SelectContent>
                     {availablePlayers.map((player) => (
                       <SelectItem key={player.id} value={player.id.toString()}>
-                        #{player.sn} - {player.first_name} {player.last_name} (Category {player.category})
+                        #{player.sn} - {player.first_name} {player.last_name} ({getCategoryDisplayName(player.category)})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -397,20 +413,26 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
                         <span className="text-muted-foreground">Category:</span>
                         <Badge className={cn(
                           "ml-2",
+                          currentPlayer.category === 'S' && "bg-category-s",
                           currentPlayer.category === 'A' && "bg-category-a",
                           currentPlayer.category === 'B' && "bg-category-b",
-                          currentPlayer.category === 'C' && "bg-category-c"
+                          currentPlayer.category === 'C' && "bg-category-c",
+                          currentPlayer.category === 'LT' && "bg-category-lt"
                         )}>
-                          {currentPlayer.category}
+                          {getCategoryDisplayName(currentPlayer.category)}
                         </Badge>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Base Price:</span>
-                        <span className="ml-2 font-medium">NPR {currentPlayer.base_price.toLocaleString()}</span>
+                        <span className="ml-2 font-medium">
+                          {currentPlayer.category === 'LT' ? 'FREE' : `NPR ${currentPlayer.base_price.toLocaleString()}`}
+                        </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Current Bid:</span>
-                        <span className="ml-2 font-bold text-primary">NPR {currentBid.toLocaleString()}</span>
+                        <span className="ml-2 font-bold text-primary">
+                          {currentPlayer.category === 'LT' ? 'FREE' : `NPR ${currentBid.toLocaleString()}`}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -439,7 +461,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
                         `hover:bg-${teamColors[team.name]}/20 hover:border-${teamColors[team.name]}`
                       )}
                       onClick={() => placeBid(team.name)}
-                      disabled={!auctionActive}
+                      disabled={!auctionActive || currentPlayer.category === 'LT'}
                     >
                       <span className="font-medium">{team.display_name}</span>
                       <span className="text-xs text-muted-foreground">
@@ -547,16 +569,137 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
                   <div className="text-sm text-muted-foreground">Players Unsold</div>
                 </div>
                 <div>
+                  <div className="text-2xl font-bold text-secondary">{players.filter(p => p.status === 'retained').length}</div>
+                  <div className="text-sm text-muted-foreground">Players Retained</div>
+                </div>
+                <div>
                   <div className="text-2xl font-bold text-muted-foreground">{availablePlayers.length}</div>
                   <div className="text-sm text-muted-foreground">Remaining</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-accent">
-                    {players.reduce((sum, p) => sum + (p.sold_price || 0), 0) / 100000}L
-                  </div>
-                  <div className="text-sm text-muted-foreground">Total Spent</div>
-                </div>
               </div>
+              
+              {/* Retained Players Management */}
+              {players.filter(p => p.status === 'retained').length > 0 && (
+                <div className="mt-6 pt-6 border-t">
+                  <h4 className="font-semibold mb-3">Retained Players Management</h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {players.filter(p => p.status === 'retained').map((player) => (
+                      <div key={player.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <span className="text-sm">
+                          {player.first_name} {player.last_name} ({getCategoryDisplayName(player.category)})
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {player.team_name ? `Assigned to: ${teams.find(t => t.name === player.team_name)?.display_name}` : 'Not assigned'}
+                          </span>
+                          {!player.team_name && (
+                            <Select onValueChange={async (teamName) => {
+                              try {
+                                const { error } = await supabase
+                                  .from('players')
+                                  .update({ team_name: teamName })
+                                  .eq('id', player.id);
+                                
+                                if (error) throw error;
+                                
+                                toast({
+                                  title: "Player Assigned",
+                                  description: `${player.first_name} ${player.last_name} assigned to ${teams.find(t => t.name === teamName)?.display_name}`,
+                                });
+                                
+                                fetchData();
+                              } catch (error) {
+                                console.error('Error assigning player:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to assign player to team",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}>
+                              <SelectTrigger className="w-32 h-6 text-xs">
+                                <SelectValue placeholder="Assign" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {teams.map((team) => (
+                                  <SelectItem key={team.name} value={team.name}>
+                                    {team.display_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    Note: Retained players need to be assigned to teams to appear in team overviews.
+                  </div>
+                  
+                  {/* Auto-assign button */}
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          // Get all unassigned players (both retained and sold without team_name)
+                          const unassignedPlayers = players.filter(p => 
+                            (p.status === 'retained' || p.status === 'sold') && !p.team_name
+                          );
+                          const teamNames = teams.map(t => t.name);
+                          
+                          if (unassignedPlayers.length === 0) {
+                            toast({
+                              title: "No Action Needed",
+                              description: "All retained and sold players are already assigned to teams.",
+                            });
+                            return;
+                          }
+                          
+                          console.log(`Auto-assigning ${unassignedPlayers.length} players...`);
+                          
+                          // Auto-assign using round-robin
+                          let successCount = 0;
+                          for (let i = 0; i < unassignedPlayers.length; i++) {
+                            const player = unassignedPlayers[i];
+                            const teamName = teamNames[i % teamNames.length];
+                            
+                            const { error } = await supabase
+                              .from('players')
+                              .update({ team_name: teamName })
+                              .eq('id', player.id);
+                            
+                            if (error) {
+                              console.error(`Error assigning player ${player.first_name} ${player.last_name}:`, error);
+                            } else {
+                              successCount++;
+                              console.log(`Assigned ${player.first_name} ${player.last_name} (${player.status}) to ${teams.find(t => t.name === teamName)?.display_name}`);
+                            }
+                          }
+                          
+                          toast({
+                            title: "Auto-assignment Complete",
+                            description: `${successCount} players have been assigned to teams.`,
+                          });
+                          
+                          fetchData();
+                        } catch (error) {
+                          console.error('Error auto-assigning players:', error);
+                          toast({
+                            title: "Error",
+                            description: "Failed to auto-assign players",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      Auto-assign Players
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </CardContent>

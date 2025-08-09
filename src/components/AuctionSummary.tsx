@@ -10,10 +10,10 @@ interface PlayerRow {
   first_name: string;
   middle_name?: string | null;
   last_name: string;
-  category: 'A' | 'B' | 'C';
-  status: 'sold' | 'unsold' | null;
+  category: 'A' | 'B' | 'C' | 'S' | 'LT';
+  status: 'sold' | 'unsold' | 'retained' | null;
   team_name: string | null;
-  sold_price: number | null;
+  sold_price?: number | null;
   updated_at: string | null;
   interested_teams: string[] | null;
 }
@@ -35,12 +35,22 @@ export function AuctionSummary({ players, teams }: AuctionSummaryProps) {
     'lumbini_lions': 'Lumbini Lions'
   };
 
-  // teamColors not needed for the new summary format
+  const getCategoryDisplayName = (category: 'A' | 'B' | 'C' | 'S' | 'LT') => {
+    switch (category) {
+      case 'S': return 'Marquee';
+      case 'A': return 'Grade A';
+      case 'B': return 'Grade B';
+      case 'C': return 'Grade C';
+      case 'LT': return 'Local Talent';
+      default: return category;
+    }
+  };
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'sold': return 'bg-success text-success-foreground';
       case 'unsold': return 'bg-destructive text-destructive-foreground';
+      case 'retained': return 'bg-secondary text-secondary-foreground';
       default: return 'bg-secondary text-secondary-foreground';
     }
   };
@@ -128,6 +138,11 @@ export function AuctionSummary({ players, teams }: AuctionSummaryProps) {
                               {p.first_name} {p.last_name} sold to {getTeamDisplayName(p.team_name)} at NPR {p.sold_price?.toLocaleString()}.
                             </span>
                           )}
+                          {p.status === 'retained' && (
+                            <span>
+                              {p.first_name} {p.last_name} retained by {getTeamDisplayName(p.team_name)}.
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -148,6 +163,7 @@ export function AuctionSummary({ players, teams }: AuctionSummaryProps) {
               <tr className="text-left border-b">
                 <th className="py-2 pr-4">Time</th>
                 <th className="py-2 pr-4">Player</th>
+                <th className="py-2 pr-4">Category</th>
                 <th className="py-2 pr-4">Status</th>
                 <th className="py-2 pr-4">Team</th>
                 <th className="py-2 pr-4">Price</th>
@@ -160,10 +176,17 @@ export function AuctionSummary({ players, teams }: AuctionSummaryProps) {
                   <td className="py-2 pr-4 font-mono">{p.updated_at ? formatTime(new Date(p.updated_at)) : '--:--'}</td>
                   <td className="py-2 pr-4">{p.first_name} {p.last_name}</td>
                   <td className="py-2 pr-4">
+                    <Badge variant="outline" className="text-xs">
+                      {getCategoryDisplayName(p.category)}
+                    </Badge>
+                  </td>
+                  <td className="py-2 pr-4">
                     <Badge className={cn("px-2 py-0.5", getStatusColor(p.status))}>{(p.status || 'pending').toUpperCase()}</Badge>
                   </td>
                   <td className="py-2 pr-4">{getTeamDisplayName(p.team_name)}</td>
-                  <td className="py-2 pr-4">{p.sold_price ? `NPR ${p.sold_price.toLocaleString()}` : '-'}</td>
+                  <td className="py-2 pr-4">
+                    {p.category === 'LT' ? 'FREE' : (p.sold_price ? `NPR ${p.sold_price.toLocaleString()}` : '-')}
+                  </td>
                   <td className="py-2 pr-4">{interestedTeamsText(p.interested_teams)}</td>
                 </tr>
               ))}

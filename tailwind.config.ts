@@ -61,9 +61,11 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				// NPL Auction specific colors
+				'category-s': 'hsl(var(--category-s))',
 				'category-a': 'hsl(var(--category-a))',
 				'category-b': 'hsl(var(--category-b))',
 				'category-c': 'hsl(var(--category-c))',
+				'category-lt': 'hsl(var(--category-lt))',
 				'team-1': 'hsl(var(--team-1))',
 				'team-2': 'hsl(var(--team-2))',
 				'team-3': 'hsl(var(--team-3))',

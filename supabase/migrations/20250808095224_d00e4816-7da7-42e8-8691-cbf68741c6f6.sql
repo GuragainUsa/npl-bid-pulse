@@ -10,11 +10,11 @@ CREATE TABLE public.players (
   player_type TEXT NOT NULL,
   batting_role TEXT,
   bowling_role TEXT,
-  category TEXT NOT NULL CHECK (category IN ('A', 'B', 'C')),
+  category TEXT NOT NULL CHECK (category IN ('A', 'B', 'C', 'S', 'LT')),
   wicket_keeper BOOLEAN DEFAULT FALSE,
   image_url TEXT,
   team_name TEXT,
-  status TEXT CHECK (status IN ('sold', 'unsold')) DEFAULT NULL,
+  status TEXT CHECK (status IN ('sold', 'unsold', 'retained')) DEFAULT NULL,
   sold_price INTEGER DEFAULT NULL,
   interested_teams TEXT[] DEFAULT '{}',
   base_price INTEGER NOT NULL,
@@ -47,6 +47,8 @@ CREATE TABLE public.teams (
   grade_a_count INTEGER DEFAULT 0,
   grade_b_count INTEGER DEFAULT 0,
   grade_c_count INTEGER DEFAULT 0,
+  marquee_count INTEGER DEFAULT 0,
+  local_talent_count INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -5,8 +5,13 @@ export function Footer() {
     <footer className="bg-background border-t mt-auto">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          {/* Left - Medium Link */}
+          {/* Left - Free to Use */}
           <div className="flex items-center gap-2">
+            <span>Free to use with credit to developer</span>
+          </div>
+
+          {/* Middle - Developer Credit */}
+          <div className="flex items-center gap-4">
             <span>Developer:</span>
             <a 
               href="https://medium.com/@pg22021321" 
@@ -17,11 +22,6 @@ export function Footer() {
               Praebesh Guragain
               <ExternalLink className="w-3 h-3" />
             </a>
-          </div>
-
-          {/* Middle - Name and Twitter */}
-          <div className="flex items-center gap-4">
-            <span>Praebesh Guragain</span>
             <a 
               href="https://x.com/prabeshguragai" 
               target="_blank" 
