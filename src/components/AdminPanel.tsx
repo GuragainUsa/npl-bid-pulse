@@ -165,7 +165,7 @@ export function AdminPanel({ isVisible, onClose }: AdminPanelProps) {
   const placeBid = async (teamName: string) => {
     if (!currentPlayer) return;
     const bidLimits = { 'S': 2000000, 'A': 1500000, 'B': 1000000, 'C': 500000 };
-    const bidIncrement = currentPlayer.category === 'C' ? 25000 : 50000;
+    const bidIncrement = currentPlayer.category === 'A' ? 50000 : 25000;
     const currentLimit = bidLimits[currentPlayer.category as keyof typeof bidLimits];
     let newBid = currentBid === 0 ? currentPlayer.base_price : currentBid + bidIncrement;
     try {
