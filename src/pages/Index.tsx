@@ -6,8 +6,6 @@ import { AuctionSummary } from "@/components/AuctionSummary";
 import { TeamsOverview } from "@/components/TeamsOverview";
 import { AdminPanel } from "@/components/AdminPanel";
 import { Footer } from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Index() {
@@ -45,6 +43,24 @@ export default function Index() {
       supabase.removeChannel(auctionSubscription);
     };
   }, []);
+  
+  // Add this useEffect to listen for the key combination to open the admin panel
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Use a combination like Ctrl + Shift + A to open the admin panel
+      if (event.ctrlKey && event.shiftKey && event.key === 'A') {
+        event.preventDefault();
+        setShowAdmin(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
 
   const [auctionData, setAuctionData] = useState(null);
 
@@ -242,16 +258,7 @@ export default function Index() {
 
       <Footer />
 
-      {/* Admin Access Button */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="fixed bottom-4 right-4 z-40"
-        onClick={() => setShowAdmin(true)}
-      >
-        <Settings className="w-4 h-4 mr-2" />
-        Admin
-      </Button>
+      {/* Admin Access Button is now removed from the UI */}
 
       <AdminPanel isVisible={showAdmin} onClose={() => setShowAdmin(false)} />
     </div>
