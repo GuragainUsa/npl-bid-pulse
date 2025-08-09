@@ -55,9 +55,11 @@ All colors MUST be HSL.
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 98%), hsl(220 14% 96%));
     
     /* Auction-specific colors */
+    --category-s: 280 100% 70%; /* Purple for Marquee */
     --category-a: 345 85% 47%; /* Premium red */
     --category-b: 213 94% 68%; /* Royal blue */
     --category-c: 142 76% 36%; /* Forest green */
+    --category-lt: 45 93% 58%; /* Gold for Local Talent */
     
     /* Team colors */
     --team-1: 345 85% 47%; /* Janakpur Bolts */
@@ -140,5 +142,16 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
   }
 }

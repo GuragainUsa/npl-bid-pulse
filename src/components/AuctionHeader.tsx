@@ -30,7 +30,7 @@ export function AuctionHeader({ currentView, onViewChange }: AuctionHeaderProps)
                 <h1 className="text-3xl lg:text-4xl font-bold text-white mb-1">
                   Nepal Premier League
                 </h1>
-                <p className="text-white/80 text-lg">Player Auction 2024</p>
+                <p className="text-white/80 text-lg">Mini Auction Season 2</p>
               </div>
             </div>
 

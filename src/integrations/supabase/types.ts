@@ -129,6 +129,8 @@ export type Database = {
           grade_b_count: number | null
           grade_c_count: number | null
           id: number
+          local_talent_count: number | null
+          marquee_count: number | null
           name: string
           remaining_purse: number | null
           total_purse: number | null
@@ -141,6 +143,8 @@ export type Database = {
           grade_b_count?: number | null
           grade_c_count?: number | null
           id?: number
+          local_talent_count?: number | null
+          marquee_count?: number | null
           name: string
           remaining_purse?: number | null
           total_purse?: number | null
@@ -153,6 +157,8 @@ export type Database = {
           grade_b_count?: number | null
           grade_c_count?: number | null
           id?: number
+          local_talent_count?: number | null
+          marquee_count?: number | null
           name?: string
           remaining_purse?: number | null
           total_purse?: number | null
