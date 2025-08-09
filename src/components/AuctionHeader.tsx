@@ -25,7 +25,7 @@ export function AuctionHeader({ currentView, onViewChange }: AuctionHeaderProps)
             {/* Logo and Title */}
             <div className="flex items-center gap-4">
               <div className="bg-white p-3 rounded-full">
-              <img src="assets/logo.png" alt="Nepal Premier League Logo" className="w-8 h-8 object-contain" />
+              <img src="/logo.png" alt="Nepal Premier League Logo" className="w-8 h-8 object-contain" />
               </div>
               <div>
                 <h1 className="text-3xl lg:text-4xl font-bold text-white mb-1">
