@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Star, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import BNK from "../../assets/club_logo/BNK.webp";
@@ -109,7 +109,6 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
   }) => {
     const teamPlayers = getTeamPlayers(team.name);
     const sortedPlayers = sortPlayersByRole(teamPlayers);
-    const totalSpent = 11000000 - team.remaining_purse;
     const teamLogo = teamLogos[team.name];
     const teamColorClass = teamColors[team.name] || "primary";
 
@@ -123,51 +122,20 @@ export function TeamsOverview({ teams, players }: TeamsOverviewProps) {
         {/* Header */}
         <CardHeader
           className={cn(
-            "text-center text-white relative overflow-hidden",
+            "text-center text-white relative overflow-hidden p-4",
             `bg-${teamColorClass}`
           )}
-          style={{
-            backgroundImage: teamLogo
-              ? `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${teamLogo})`
-              : undefined,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
         >
-          <CardTitle className="text-lg font-bold mb-2">
-            {team.display_name}
-          </CardTitle>
-          <div className="space-y-1 text-sm">
-            <div>Remaining: {(team.remaining_purse / 100000).toFixed(1)}L</div>
-            <div className="text-xs opacity-90">
-              Spent: {(totalSpent / 100000).toFixed(1)}L
-            </div>
+          <div className="flex flex-col items-center gap-2">
+            <img src={teamLogo} alt={`${team.display_name} Logo`} className="w-16 h-16 object-contain rounded-full bg-white p-1" />
+            <CardTitle className="text-lg font-bold">
+              {team.display_name}
+            </CardTitle>
           </div>
         </CardHeader>
 
         {/* Content */}
         <CardContent className="p-4 bg-white">
-          {/* Stats */}
-          <div className="mb-4 grid grid-cols-5 gap-2 text-center text-sm">
-            <div>
-              <Crown className="w-3 h-3 inline-block mr-1" /> Marquee{" "}
-              <Badge variant="outline">{team.marquee_count}/1</Badge>
-            </div>
-            <div>
-              Grade A <Badge variant="outline">{team.grade_a_count}/3</Badge>
-            </div>
-            <div>
-              Grade B <Badge variant="outline">{team.grade_b_count}/4</Badge>
-            </div>
-            <div>
-              Grade C <Badge variant="outline">{team.grade_c_count}/3</Badge>
-            </div>
-            <div>
-              <Star className="w-3 h-3 inline-block mr-1" /> Local{" "}
-              <Badge variant="outline">{team.local_talent_count}</Badge>
-            </div>
-          </div>
-
           {/* Player Table */}
           <div className="overflow-x-auto">
             <table className="w-full border border-gray-200 text-sm">
