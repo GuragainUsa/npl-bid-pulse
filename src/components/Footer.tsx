@@ -5,11 +5,7 @@ export function Footer() {
     <footer className="bg-background border-t mt-auto">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          {/* Left - Free to Use */}
-          <div className="flex items-center gap-2">
-            <span>Free to use with credit to developer</span>
-          </div>
-
+         
           {/* Middle - Developer Credit */}
           <div className="flex items-center gap-4">
             <span>Developer:</span>
@@ -19,7 +15,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
             >
-              Praebesh Guragain
+              Prabesh Guragain
               <ExternalLink className="w-3 h-3" />
             </a>
             <a 
@@ -29,8 +25,13 @@ export function Footer() {
               className="text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
             >
               <Twitter className="w-4 h-4" />
-              @praebeshguragain
+              @prabeshguragain
             </a>
+          </div>
+
+           {/* Left - Free to Use */}
+           <div className="flex items-center gap-2">
+            <span>Free to use with credit to developer. Looking fordward to collaborate.</span>
           </div>
 
           {/* Right - YouTube Live */}

@@ -110,7 +110,7 @@ export function CurrentPlayer({ player, currentBid, lastAuctionedPlayer }: Curre
             </div>
             <Badge 
               className={cn(
-                "absolute -bottom-2 left-1/2 transform -translate-x-1/2 px-6 py-2 text-lg font-bold",
+                "absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-40 py-2 justify-center text-lg font-bold",
                 `bg-${categoryColors[displayPlayer.category]} text-white border-0`
               )}
             >
